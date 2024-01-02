@@ -1,66 +1,37 @@
-from skimage.metrics import structural_similarity as compare_ssim
-import imutils
 import cv2
+import streamlit as st
+import numpy as np
+from image_comparison import image_com
 
+# judul web
+st.title("Image Comparison")
 
-def resize_images(image1, image2):
-    height1, width1 = image1.shape[:2]
-    height2, width2 = image2.shape[:2]
+# upload gambar
+upload_file_1 = st.file_uploader("Upload Image 1", type=['png', 'jpeg', 'jpg'])
+upload_file_2 = st.file_uploader("Upload Image 2", type=['png', 'jpeg', 'jpg'])
 
-    if height1 != height2 or width1 != width2:
-        new_height = min(height1, height2)
-        new_width = min(width1, width2)
+# jika gambar sudah diupload
+if upload_file_1 is not None and upload_file_2 is not None:
+    # baca gambar
+    file_bytes_1 = np.asarray(bytearray(upload_file_1.read()), dtype=np.uint8)
+    file_bytes_2 = np.asarray(bytearray(upload_file_2.read()), dtype=np.uint8)
+    image_1 = cv2.imdecode(file_bytes_1, cv2.IMREAD_COLOR)
+    image_2 = cv2.imdecode(file_bytes_2, cv2.IMREAD_COLOR)
 
-        image1 = cv2.resize(image1, (new_width, new_height))
-        image2 = cv2.resize(image2, (new_width, new_height))
+    # deklarasi kolom
+    col1, col2 = st.columns(2)
 
-    return image1, image2
+    # tampilkan gambar
+    col1.image(image_1, caption="Image 1", use_column_width=True, channels="BGR")
+    col2.image(image_2, caption="Image 2", use_column_width=True, channels="BGR")
 
-
-def resize_for_display(image, target_width=500):
-    aspect_ratio = image.shape[1] / image.shape[0]
-    target_height = int(target_width / aspect_ratio)
-    return cv2.resize(image, (target_width, target_height))
-
-
-# baca gambar
-imageA = cv2.imread("first.png")
-imageB = cv2.imread("second.png")
-
-imageA, imageB = resize_images(imageA, imageB)
-
-# konversi warna gambar
-grayA = cv2.cvtColor(imageA, cv2.COLOR_BGR2GRAY)
-grayB = cv2.cvtColor(imageB, cv2.COLOR_BGR2GRAY)
-
-# lihat kemiripan gambar pake lib skit image
-(score, diff) = compare_ssim(grayA, grayB, full=True, gaussian_weights=True)
-
-diff = (diff * 255).astype("uint8")
-
-thresh_value, thresh = cv2.threshold(
-    diff, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
-
-cnts, _ = cv2.findContours(
-    thresh.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-
-for c in cnts:
-    if cv2.contourArea(c) < 100:
-        continue
-
-    (x, y, w, h) = cv2.boundingRect(c)
-    cv2.rectangle(imageA, (x, y), (x + w, y + h), (0, 0, 255), 2)
-    cv2.rectangle(imageB, (x, y), (x + w, y + h), (0, 0, 255), 2)
-
-print("SSIM: {:.2f}".format(score))
-
-imageA_resized = resize_for_display(imageA)
-imageB_resized = resize_for_display(imageB)
-diff_resized = resize_for_display(diff)
-thresh_resized = resize_for_display(thresh)
-
-cv2.imshow("Original", imageA_resized)
-cv2.imshow("Modified", imageB_resized)
-cv2.imshow("Diff", diff_resized)
-cv2.imshow("Thresh", thresh_resized)
-cv2.waitKey(0)
+    # ambil gambar hasil dari fungsi image_com di file image_comparison.py
+    image_1, image_2, image_3, image_4 =  image_com(image_1, image_2)
+    # jika tombol ditekan
+    if st.button("Bandingkan"):
+        # tampilkan gambar
+        col1, col2 = st.columns(2)
+        col1.image(image_1, caption="Original", use_column_width=True, channels="BGR")
+        col2.image(image_2, caption="Modified", use_column_width=True, channels="BGR")
+        col1.image(image_3, caption="Diff", use_column_width=True)
+        col2.image(image_4, caption="Thresh", use_column_width=True)
