@@ -1,6 +1,5 @@
 # import the necessary packages
 from skimage.metrics import structural_similarity as compare_ssim
-import argparse
 import imutils
 import cv2
 
@@ -28,17 +27,11 @@ def resize_for_display(image, target_width=500):
     return cv2.resize(image, (target_width, target_height))
 
 
-# construct the argument parse and parse the arguments
-ap = argparse.ArgumentParser()
-ap.add_argument("-f", "--first", required=True,
-                help="first input image")
-ap.add_argument("-s", "--second", required=True,
-                help="second")
-args = vars(ap.parse_args())
-
-# load the two input images
-imageA = cv2.imread(args["first"])
-imageB = cv2.imread(args["second"])
+# Load images directly from the directory
+# Replace "first.png" with the actual path to your first image
+imageA = cv2.imread("first.png")
+# Replace "second.png" with the actual path to your second image
+imageB = cv2.imread("second.png")
 
 # resize the images to have the same dimensions
 imageA, imageB = resize_images(imageA, imageB)
