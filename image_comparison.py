@@ -1,7 +1,7 @@
 from skimage.metrics import structural_similarity as compare_ssim
 import cv2
 
-def image_com(image_1, image_2):
+def image_comparison(image_1, image_2):
     def resize_images(image1, image2):
         height1, width1 = image1.shape[:2]
         height2, width2 = image2.shape[:2]
@@ -52,7 +52,7 @@ def image_com(image_1, image_2):
         cv2.rectangle(imageA, (x, y), (x + w, y + h), (0, 0, 255), 2)
         cv2.rectangle(imageB, (x, y), (x + w, y + h), (0, 0, 255), 2)
 
-    print("SSIM: {:.2f}".format(score))
+    # print("SSIM: {:.2f}".format(score))
 
     imageA_resized = resize_for_display(imageA)
     imageB_resized = resize_for_display(imageB)
