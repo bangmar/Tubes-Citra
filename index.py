@@ -6,22 +6,15 @@ from image_compression import image_compression
 import io
 import base64
 from zipfile import ZipFile
+import io as BytesIO
+import base64
+from base64 import b64encode
 # judul web
 st.title("Image Comparison")
 
 # upload gambar
 upload_file_1 = st.file_uploader("Upload Image 1", type=['png', 'jpeg', 'jpg'])
 upload_file_2 = st.file_uploader("Upload Image 2", type=['png', 'jpeg', 'jpg'])
-
-
-# fungsi untuk mengubah gambar menjadi bytes
-def image_to_bytes(compressed_image):
-    _, buffer = cv2.imencode('.png', cv2.cvtColor(compressed_image, 1))
-    
-    img_byte_array = io.BytesIO(buffer.tobytes())
-    
-    return img_byte_array.getvalue()
-
 
 # jika gambar sudah diupload
 if upload_file_1 is not None and upload_file_2 is not None:
@@ -37,19 +30,6 @@ if upload_file_1 is not None and upload_file_2 is not None:
     # tampilkan gambar
     col1.image(image_1, caption="Image 1", use_column_width=True, channels="BGR")
     col2.image(image_2, caption="Image 2", use_column_width=True, channels="BGR")
-
-    bandingkan_button_clicked = False
-    kompresi_button_clicked = False
-
-    # bandingkan_button_clicked = st.button("Bandingkan")
-
-    if 'image_state' not in st.session_state:
-        st.session_state.image_state = {
-            'image_1_cmp': None,
-            'image_2_cmp': None,
-            'image_3_cmp': None,
-            'image_4_cmp': None
-        }
 
     if "button_clicked" not in st.session_state:
         st.session_state.button_clicked = False
@@ -81,25 +61,23 @@ if upload_file_1 is not None and upload_file_2 is not None:
                 else:
                     col2.image(compressed_image, caption=f"Compressed Image {idx+1}", use_column_width=True, channels="BGR")
 
-            # membuat zip file
-            zip_file_name = "hasil_images.zip"
-            with st.spinner("Creating ZIP file..."):
-                with ZipFile(zip_file_name, "w") as zip_file:
-                    for idx, compressed_image in enumerate(compressed_images):
-                        image_bytes = image_to_bytes(compressed_image)
-                        zip_file.writestr(f"Compressed_Image_{idx+1}.png", image_bytes)
-
-            # membuka zip file
-            with open(zip_file_name, "rb") as zip_file:
-                zip_data = zip_file.read()
-
+            # deklarasi baris dan kolom
+            rows = 2
+            cols = 2
+            # gabungkan gambar
+            image_height, image_width, _ = compressed_images[0].shape
+            combined_image = np.zeros((rows * image_height, cols * image_width, 3), dtype=np.uint8)
+            # perulanagn untuk menggabungkan gambar
+            for i in range(rows):
+                for j in range(cols):
+                    combined_image[i * image_height : (i + 1) * image_height,
+                        j * image_width : (j + 1) * image_width, :] = compressed_images[i * cols + j]
+            # membuat numpy array menjadi bytes
+            image_bytes = cv2.imencode('.jpg', combined_image)[1].tobytes()
             # membuat tombol download
-            download_button = st.download_button(
-                label="Download Hasil Kompresi",
-                key='download_button',
-                data=zip_data,
-                file_name=zip_file_name,
-                mime="application/zip",
+            st.markdown(
+                f'<a href="data:image/jpeg;base64,{b64encode(image_bytes).decode()}" download="hasil_kompresi.jpg">Download Hasil Kompresi</a>',
+                unsafe_allow_html=True,
             )
 
 
